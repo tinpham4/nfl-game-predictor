@@ -1,0 +1,11 @@
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+.venv/
+venv/
+
+# Note: data/ is deliberately NOT ignored.
+#
+# Streamlit Community Cloud only runs app.py - it never runs build_data.py. So
+# the CSVs have to be in the repo or the deployed app has no data to show. They
+# total about 1.4 MB, which is nothing for git.

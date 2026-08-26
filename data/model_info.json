@@ -1,0 +1,21 @@
+{
+  "built_on": "2026-08-26 17:51",
+  "train_seasons": "2016-2023",
+  "test_seasons": "2024-2025",
+  "train_games": 2008,
+  "test_games": 543,
+  "accuracy": 0.6316758747697975,
+  "baseline": 0.5359116022099447,
+  "roc_auc": 0.6932035127911417,
+  "log_loss": 0.6341672877610622,
+  "form_through": "2026-01-04",
+  "upcoming_season": 2026,
+  "form_window": 5,
+  "coefficients": {
+    "off_epa_diff": 0.5538,
+    "def_epa_diff": -0.2629,
+    "pace_diff": 0.0203,
+    "rest_diff": 0.0679,
+    "div_game": -0.0313
+  }
+}

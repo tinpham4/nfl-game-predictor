@@ -1,0 +1,11 @@
+# Everything needed to REBUILD the data and retrain the model with
+# build_data.py. This is a superset of requirements.txt.
+#
+#   pip install -r requirements-dev.txt
+#   python build_data.py
+
+-r requirements.txt
+
+nflreadpy>=0.1.5
+scikit-learn>=1.5,<2
+numpy>=1.26
