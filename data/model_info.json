@@ -1,21 +1,72 @@
 {
-  "built_on": "2026-08-26 17:51",
+  "built_on": "2026-09-16 14:53",
   "train_seasons": "2016-2023",
-  "test_seasons": "2024-2025",
-  "train_games": 2008,
-  "test_games": 543,
-  "accuracy": 0.6316758747697975,
-  "baseline": 0.5359116022099447,
-  "roc_auc": 0.6932035127911417,
-  "log_loss": 0.6341672877610622,
-  "form_through": "2026-01-04",
+  "test_seasons": "2024-2026",
+  "train_games": 1966,
+  "test_games": 559,
+  "accuracy": 0.629695885509839,
+  "baseline": 0.5384615384615384,
+  "roc_auc": 0.6899997424605321,
+  "log_loss": 0.6357572967119905,
+  "confusion_matrix": {
+    "true_negative": 136,
+    "false_positive": 122,
+    "false_negative": 85,
+    "true_positive": 216
+  },
+  "form_through": "2026-09-14",
   "upcoming_season": 2026,
   "form_window": 5,
+  "minimum_form_games": 3,
+  "features": [
+    "off_epa_diff",
+    "def_epa_diff",
+    "pace_diff",
+    "rest_diff",
+    "div_game"
+  ],
   "coefficients": {
-    "off_epa_diff": 0.5538,
-    "def_epa_diff": -0.2629,
-    "pace_diff": 0.0203,
-    "rest_diff": 0.0679,
-    "div_game": -0.0313
-  }
+    "off_epa_diff": 0.554,
+    "def_epa_diff": -0.2601,
+    "pace_diff": 0.0242,
+    "rest_diff": 0.0664,
+    "div_game": -0.0263
+  },
+  "confidence_buckets": [
+    {
+      "bucket": "50-55%",
+      "games": 124,
+      "accuracy": 0.4596774193548387,
+      "average_confidence": 0.52573313454753
+    },
+    {
+      "bucket": "55-60%",
+      "games": 111,
+      "accuracy": 0.6036036036036037,
+      "average_confidence": 0.5775619601565255
+    },
+    {
+      "bucket": "60-65%",
+      "games": 110,
+      "accuracy": 0.6272727272727273,
+      "average_confidence": 0.6240182662803196
+    },
+    {
+      "bucket": "65-70%",
+      "games": 75,
+      "accuracy": 0.7066666666666667,
+      "average_confidence": 0.6733025665333875
+    },
+    {
+      "bucket": "70%+",
+      "games": 139,
+      "accuracy": 0.762589928057554,
+      "average_confidence": 0.7641637393989275
+    }
+  ],
+  "limitations": [
+    "The model does not account for injuries, weather, or roster changes.",
+    "Early-season form carries over from the prior season.",
+    "Predictions are straight-up winners, not betting-spread picks."
+  ]
 }

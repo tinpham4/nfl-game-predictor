@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+MAVEN_VERSION="3.9.11"
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+MAVEN_DIR="$SCRIPT_DIR/.mvn/wrapper/dists/apache-maven-$MAVEN_VERSION"
+MAVEN_BIN="$MAVEN_DIR/bin/mvn"
+
+if [ ! -x "$MAVEN_BIN" ]; then
+    ARCHIVE="$SCRIPT_DIR/.mvn/wrapper/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+    mkdir -p "$SCRIPT_DIR/.mvn/wrapper/dists"
+    curl --fail --location --silent --show-error \
+        "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.tar.gz" \
+        --output "$ARCHIVE"
+    tar -xzf "$ARCHIVE" -C "$SCRIPT_DIR/.mvn/wrapper/dists"
+    rm "$ARCHIVE"
+fi
+
+exec "$MAVEN_BIN" "$@"

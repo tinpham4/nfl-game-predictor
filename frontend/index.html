@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="NFL game predictions from an explainable logistic regression model.">
+    <title>NFL Game Predictor</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <nav class="nav-shell" aria-label="Primary navigation">
+            <a class="brand" href="#top">NFL Game Predictor</a>
+            <div class="nav-links">
+                <a href="#predictions">Predictions</a>
+                <a href="#standings">Standings</a>
+                <a href="#model">Model</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="top" class="page-shell">
+        <section class="hero">
+            <p class="eyebrow">Explainable machine learning · Updated from nflverse</p>
+            <h1>See the matchup.<br><span>Understand the pick.</span></h1>
+            <p class="hero-copy">Straight-up NFL winner predictions built from recent offensive efficiency, defensive efficiency, pace, rest, and division matchups.</p>
+            <div id="model-metrics" class="metric-grid" aria-label="Model performance"></div>
+        </section>
+
+        <div id="status" class="status" role="status" aria-live="polite">Loading prediction data…</div>
+
+        <section id="predictions" class="section-block" hidden>
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Team outlook</p>
+                    <h2>Season projection</h2>
+                </div>
+                <label class="select-label" for="team-select">
+                    Choose a team
+                    <select id="team-select"></select>
+                </label>
+            </div>
+
+            <article class="team-card">
+                <div class="team-identity">
+                    <img id="team-logo" alt="" width="112" height="112">
+                    <div>
+                        <p id="team-division" class="eyebrow"></p>
+                        <h3 id="team-name"></h3>
+                        <p id="form-through" class="muted"></p>
+                    </div>
+                </div>
+                <div id="team-metrics" class="team-metrics"></div>
+            </article>
+
+            <div class="table-card">
+                <div class="card-heading">
+                    <div>
+                        <h3>Game-by-game schedule</h3>
+                        <p>Win probability is always shown from the selected team’s point of view.</p>
+                    </div>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th>Week</th><th>Date</th><th>Matchup</th><th>Model pick</th><th>Win chance</th><th>Status</th></tr></thead>
+                        <tbody id="team-schedule"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-block split-section" hidden id="league-section">
+            <div class="table-card" id="weekly-card">
+                <div class="card-heading inline-heading">
+                    <div>
+                        <p class="section-kicker">Around the league</p>
+                        <h2>Weekly predictions</h2>
+                    </div>
+                    <label class="select-label compact" for="week-select">
+                        Week
+                        <select id="week-select"></select>
+                    </label>
+                </div>
+                <div id="weekly-predictions" class="game-list"></div>
+            </div>
+
+            <div id="standings" class="table-card">
+                <div class="card-heading inline-heading">
+                    <div>
+                        <p class="section-kicker">Expected wins</p>
+                        <h2>Projected standings</h2>
+                    </div>
+                    <label class="select-label compact" for="conference-select">
+                        Conference
+                        <select id="conference-select">
+                            <option value="">NFL</option>
+                            <option value="AFC">AFC</option>
+                            <option value="NFC">NFC</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="table-scroll standings-scroll">
+                    <table>
+                        <thead><tr><th>Rank</th><th>Team</th><th>Division</th><th>Projected record</th></tr></thead>
+                        <tbody id="standings-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="model" class="section-block model-section" hidden>
+            <div class="section-heading model-heading">
+                <div>
+                    <p class="section-kicker">Under the hood</p>
+                    <h2>A simple model with an honest test</h2>
+                </div>
+                <p>Logistic regression turns five pregame differences into a home-win probability. Training ends before the test seasons begin, and rolling form excludes the game being predicted.</p>
+            </div>
+            <div class="model-grid">
+                <article class="info-card">
+                    <h3>What the model sees</h3>
+                    <ul id="feature-list" class="feature-list"></ul>
+                    <p id="training-summary" class="note"></p>
+                </article>
+                <article class="info-card">
+                    <h3>Confidence check</h3>
+                    <p class="muted">Higher-confidence groups should be correct more often.</p>
+                    <div id="confidence-buckets" class="bucket-chart"></div>
+                </article>
+                <article class="info-card limitation-card">
+                    <h3>Known limitations</h3>
+                    <ul id="limitations"></ul>
+                </article>
+            </div>
+            <p class="betting-note">This model predicts straight-up winners. It does not predict who will cover the betting spread.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>Python data pipeline → Spring Boot REST API → vanilla JavaScript dashboard</p>
+    </footer>
+</body>
+</html>

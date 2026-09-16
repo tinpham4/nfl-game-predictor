@@ -1,11 +1,6 @@
-# What the deployed app needs to RUN.
-#
-# Deliberately short. The app only reads the CSVs in data/ and draws them - it
-# doesn't train anything, so scikit-learn and nflreadpy aren't needed here.
-# Keeping them out makes the deploy install faster and gives it far fewer ways
-# to break. If you want to rebuild the data, use requirements-dev.txt instead.
-
-streamlit>=1.40,<2
+# Python data pipeline dependencies.
 pandas>=2.2,<4
-matplotlib>=3.9,<4
-seaborn>=0.13,<0.15
+nflreadpy>=0.1.5
+scikit-learn>=1.5,<2
+numpy>=1.26
+pyarrow>=18

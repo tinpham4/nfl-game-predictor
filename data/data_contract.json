@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "csvFiles": {
+    "predictions.csv": {
+      "requiredColumns": [
+        "game_id", "season", "week", "gameday", "away_team", "home_team",
+        "away_score", "home_score", "result", "spread_line", "div_game",
+        "is_played", "home_win_prob", "predicted_winner", "confidence",
+        "actual_winner", "was_correct", "home_off_epa", "home_def_epa",
+        "home_plays", "away_off_epa", "away_def_epa", "away_plays",
+        "off_epa_diff", "def_epa_diff", "pace_diff", "rest_diff"
+      ]
+    },
+    "teams.csv": {
+      "requiredColumns": [
+        "team_abbr", "team_name", "team_nick", "team_conf", "team_division",
+        "team_color", "team_logo_espn"
+      ]
+    },
+    "current_form.csv": {
+      "requiredColumns": [
+        "team", "form_off_epa", "form_def_epa", "form_plays", "games_used", "form_through"
+      ]
+    },
+    "team_form.csv": {
+      "requiredColumns": [
+        "game_id", "season", "week", "gameday", "team", "off_epa", "def_epa",
+        "plays", "form_off_epa", "form_def_epa", "form_plays"
+      ]
+    }
+  },
+  "jsonFiles": {
+    "model_info.json": {
+      "requiredProperties": [
+        "built_on", "train_seasons", "test_seasons", "train_games", "test_games",
+        "accuracy", "baseline", "roc_auc", "log_loss", "confusion_matrix",
+        "form_through", "upcoming_season", "form_window", "minimum_form_games",
+        "features", "coefficients", "confidence_buckets", "limitations"
+      ]
+    }
+  }
+}
