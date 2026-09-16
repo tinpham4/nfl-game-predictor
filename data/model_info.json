@@ -1,67 +1,85 @@
 {
-  "built_on": "2026-09-16 14:53",
+  "built_on": "2026-09-16 16:01",
   "train_seasons": "2016-2023",
   "test_seasons": "2024-2026",
   "train_games": 1966,
   "test_games": 559,
-  "accuracy": 0.629695885509839,
+  "accuracy": 0.6618962432915921,
   "baseline": 0.5384615384615384,
-  "roc_auc": 0.6899997424605321,
-  "log_loss": 0.6357572967119905,
+  "roc_auc": 0.7137320044296789,
+  "log_loss": 0.6198751408557528,
   "confusion_matrix": {
-    "true_negative": 136,
-    "false_positive": 122,
-    "false_negative": 85,
-    "true_positive": 216
+    "true_negative": 147,
+    "false_positive": 111,
+    "false_negative": 78,
+    "true_positive": 223
   },
   "form_through": "2026-09-14",
   "upcoming_season": 2026,
   "form_window": 5,
   "minimum_form_games": 3,
+  "elo": {
+    "initial_rating": 1500.0,
+    "k_factor": 30.0,
+    "season_carryover": 0.67,
+    "home_field_points": 55.0
+  },
   "features": [
     "off_epa_diff",
     "def_epa_diff",
     "pace_diff",
     "rest_diff",
-    "div_game"
+    "div_game",
+    "elo_diff"
   ],
   "coefficients": {
-    "off_epa_diff": 0.554,
-    "def_epa_diff": -0.2601,
-    "pace_diff": 0.0242,
-    "rest_diff": 0.0664,
-    "div_game": -0.0263
+    "off_epa_diff": 0.3199,
+    "def_epa_diff": -0.1094,
+    "pace_diff": 0.0352,
+    "rest_diff": 0.0763,
+    "div_game": -0.0293,
+    "elo_diff": 0.4393
+  },
+  "model_comparison": {
+    "previous_model": "EPA, pace, rest, and division features without Elo",
+    "accuracy_before": 0.629695885509839,
+    "accuracy_after": 0.6618962432915921,
+    "roc_auc_before": 0.6899997424605321,
+    "roc_auc_after": 0.7137320044296789,
+    "log_loss_before": 0.6357572967119905,
+    "log_loss_after": 0.6198751408557528,
+    "parameter_selection": "Elo settings were selected on 2021-2023 training-era validation; 2024 and later remained the final holdout."
   },
   "confidence_buckets": [
     {
       "bucket": "50-55%",
-      "games": 124,
-      "accuracy": 0.4596774193548387,
-      "average_confidence": 0.52573313454753
+      "games": 104,
+      "accuracy": 0.5096153846153846,
+      "average_confidence": 0.5249420204130429
     },
     {
       "bucket": "55-60%",
-      "games": 111,
-      "accuracy": 0.6036036036036037,
-      "average_confidence": 0.5775619601565255
+      "games": 109,
+      "accuracy": 0.6330275229357798,
+      "average_confidence": 0.5734850981541979
     },
     {
       "bucket": "60-65%",
-      "games": 110,
-      "accuracy": 0.6272727272727273,
-      "average_confidence": 0.6240182662803196
+      "games": 91,
+      "accuracy": 0.6483516483516484,
+      "average_confidence": 0.6250937628564237
     },
     {
       "bucket": "65-70%",
-      "games": 75,
-      "accuracy": 0.7066666666666667,
-      "average_confidence": 0.6733025665333875
+      "games": 87,
+      "accuracy": 0.6896551724137931,
+      "average_confidence": 0.672974611334149
     },
     {
       "bucket": "70%+",
-      "games": 139,
-      "accuracy": 0.762589928057554,
-      "average_confidence": 0.7641637393989275
+      "games": 168,
+      "accuracy": 0.7678571428571429,
+      "average_confidence": 0.7747333735876761
     }
   ],
   "limitations": [

@@ -38,7 +38,7 @@ def load_contract(path: Path) -> dict:
 
 
 def validate_output_files(data_directory: Path) -> None:
-    """Check every generated artifact against the shared Python/Java contract."""
+    """Check every generated artifact against the dashboard data contract."""
 
     contract = load_contract(data_directory / "data_contract.json")
     for filename, definition in contract["csvFiles"].items():
@@ -68,3 +68,11 @@ def validate_output_files(data_directory: Path) -> None:
         raise DataValidationError("predictions.csv contains a home_win_prob outside [0, 1]")
     if not predictions["confidence"].between(0.5, 1).all():
         raise DataValidationError("predictions.csv contains a confidence outside [0.5, 1]")
+    elo_columns = ["home_elo", "away_elo", "elo_diff"]
+    if predictions[elo_columns].isna().any().any():
+        raise DataValidationError("predictions.csv contains a missing Elo value")
+    elo_error = (
+        predictions["home_elo"] - predictions["away_elo"] - predictions["elo_diff"]
+    ).abs()
+    if (elo_error > 1e-8).any():
+        raise DataValidationError("predictions.csv contains an inconsistent Elo difference")

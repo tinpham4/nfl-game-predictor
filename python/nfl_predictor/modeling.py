@@ -18,12 +18,17 @@ from .validation import DataValidationError
 class TrainedModel:
     model: LogisticRegression
     scaler: StandardScaler
+    feature_names: tuple[str, ...]
     train: pd.DataFrame
     test: pd.DataFrame
     metrics: dict
 
 
-def train_model(games: pd.DataFrame, train_through: int) -> TrainedModel:
+def train_model(
+    games: pd.DataFrame,
+    train_through: int,
+    feature_names: tuple[str, ...] = FEATURE_NAMES,
+) -> TrainedModel:
     played = games[games["is_played"]].copy()
     train = played[played["season"] <= train_through].copy()
     test = played[played["season"] > train_through].copy()
@@ -33,8 +38,8 @@ def train_model(games: pd.DataFrame, train_through: int) -> TrainedModel:
         raise DataValidationError("Train and test sets must each contain home wins and losses")
 
     scaler = StandardScaler()
-    train_features = scaler.fit_transform(train[list(FEATURE_NAMES)])
-    test_features = scaler.transform(test[list(FEATURE_NAMES)])
+    train_features = scaler.fit_transform(train[list(feature_names)])
+    test_features = scaler.transform(test[list(feature_names)])
     model = LogisticRegression(max_iter=1_000)
     model.fit(train_features, train["home_won"])
 
@@ -48,12 +53,19 @@ def train_model(games: pd.DataFrame, train_through: int) -> TrainedModel:
         "log_loss": float(log_loss(test["home_won"], probabilities)),
         "confusion_matrix": {"true_negative": int(tn), "false_positive": int(fp), "false_negative": int(fn), "true_positive": int(tp)},
     }
-    return TrainedModel(model=model, scaler=scaler, train=train, test=test, metrics=metrics)
+    return TrainedModel(
+        model=model,
+        scaler=scaler,
+        feature_names=feature_names,
+        train=train,
+        test=test,
+        metrics=metrics,
+    )
 
 
 def add_predictions(games: pd.DataFrame, trained: TrainedModel) -> pd.DataFrame:
     result = games.copy()
-    transformed = trained.scaler.transform(result[list(FEATURE_NAMES)])
+    transformed = trained.scaler.transform(result[list(trained.feature_names)])
     result["home_win_prob"] = trained.model.predict_proba(transformed)[:, 1]
     if not result["home_win_prob"].between(0, 1).all():
         raise DataValidationError("Model produced a probability outside [0, 1]")

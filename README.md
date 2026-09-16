@@ -1,64 +1,59 @@
 # NFL Game Predictor
 
-A small full-stack application that predicts straight-up NFL winners with an
-explainable logistic regression model. Python builds the features and prediction
-artifacts, Spring Boot validates and serves them through a REST API, and a
-responsive HTML/CSS/JavaScript dashboard presents the results.
+A Streamlit application that predicts straight-up NFL winners with an
+explainable logistic regression model. The app is intentionally Python-only:
+the data pipeline creates validated CSV/JSON artifacts, and Streamlit reads
+those files without retraining the model during page loads.
 
-The current model is **63.0% accurate on 559 chronologically held-out games**
+**Live app:** [Open the NFL Game Predictor](https://nfl-game-predictor-snhqz6kcp4w37t87y4kgnk.streamlit.app/)
+
+The current model is **66.2% accurate on 559 chronologically held-out games**
 from 2024 through Week 1 of 2026, compared with a 53.8% always-pick-the-home-team
-baseline. Its ROC AUC is 0.690.
+baseline. Its ROC AUC is 0.714.
 
 ## Architecture
 
 ```text
-nflverse
-    |
-    v
-Python Data Pipeline
-    |
-    v
-Feature Engineering
-    |
-    v
-Logistic Regression Model
-    |
-    v
-CSV / JSON Prediction Data
-    |
-    v
-Spring Boot REST API
-    |
-    v
-HTML + CSS + JavaScript Dashboard
+nflverse data
+     |
+     v
+Python feature pipeline
+     |
+     v
+Logistic regression
+     |
+     v
+Validated CSV / JSON artifacts
+     |
+     v
+Streamlit dashboard
 ```
 
-Python and Java have intentionally separate jobs. The Python model runs only
-when the data is rebuilt. Spring Boot loads the resulting files once at startup;
-it does not download play-by-play data or retrain the model when a visitor opens
-the site.
+The slow pipeline runs only when predictions need to be refreshed. The
+generated artifacts are committed so the dashboard starts quickly locally and
+on Streamlit Community Cloud.
 
 ## Project structure
 
 ```text
-backend/                      Spring Boot REST API and Java tests
-frontend/                     Static dashboard served by Spring Boot
-python/
-  build_data.py               Pipeline command-line entry point
-  nfl_predictor/
-    config.py                 Reproducible pipeline settings
-    data_loading.py           nflverse downloads and column selection
-    features.py               Team-game stats and rolling form
-    modeling.py               Training, evaluation, and prediction
-    pipeline.py               End-to-end orchestration and exports
-    validation.py             Input/output contract checks
-tests/python/                 Python unit and integration tests
-data/                         Generated CSV/JSON artifacts and shared contract
+app.py                        Streamlit dashboard
+.streamlit/config.toml        Streamlit theme and server settings
+python/build_data.py          Pipeline command-line entry point
+python/nfl_predictor/
+  config.py                   Reproducible pipeline settings
+  data_loading.py             nflverse downloads and column selection
+  features.py                 Team-game statistics and rolling form
+  modeling.py                 Training, evaluation, and prediction
+  pipeline.py                 End-to-end orchestration and exports
+  validation.py               Artifact contract checks
+  dashboard.py                Dashboard data and standings helpers
+tests/python/                 Python and Streamlit tests
+data/                         Generated artifacts and their contract
 ```
 
 ## How the model works
 
-The target is whether the home team wins. Each numeric feature is expressed as
+The target is whether the home team wins. Each numeric input is expressed as
 the home team's value minus the away team's value:
 
 - offensive EPA per play over the previous five games
@@ -66,161 +61,138 @@ the home team's value minus the away team's value:
 - offensive plays per game over the previous five games
 - rest-day difference
 - whether the teams are in the same division
+- pregame Elo rating difference based only on earlier results
 
-The model is a scikit-learn logistic regression. It is deliberately simple:
-each feature has one coefficient, the output is a probability, and the result
-is explainable in an interview.
+The model is a scikit-learn logistic regression. That keeps every coefficient
+and probability explainable while still outperforming the home-team baseline.
 
 ### Training and evaluation
 
-- Training: 2016-2023 (1,966 games)
-- Test: 2024-2026 to date (559 games)
-- Accuracy: 0.630
+- Training: 2016-2023, 1,966 games
+- Held-out evaluation: 2024-2026 to date, 559 games
+- Accuracy: 0.662
 - Always-home baseline: 0.538
-- ROC AUC: 0.690
-- Log loss: 0.636
-- Confusion matrix: 136 true negatives, 122 false positives, 85 false
-  negatives, and 216 true positives
+- ROC AUC: 0.714
+- Log loss: 0.620
+- Confusion matrix: 147 true negatives, 111 false positives, 78 false
+  negatives, and 223 true positives
 
-The test split is chronological, not random. That imitates the real use case:
-learn from past seasons and predict future games.
+The split is chronological rather than random. That matches the real use case:
+learn from past seasons and predict later games.
 
 ### Leakage prevention
 
-Rolling team form uses `shift(1)` before the rolling average. A game's features
-therefore contain only games played before it. The scaler is fit on training
-data only.
+Rolling form calls `shift(1)` before the rolling average, so a game's features
+contain only information available before that game. The scaler is fit on the
+training split only.
 
-The original project also filled every missing historical form value with the
-team's latest form. That inserted 2025 knowledge into early 2016 rows. The
-current pipeline restricts that fallback to unplayed games and drops historical
-games that do not yet have the required three prior games. A focused regression
-test protects this boundary.
+The original implementation also filled missing historical form with each
+team's latest form. That inserted future information into early 2016 rows. The
+current pipeline limits that fallback to unplayed games and drops historical
+games without the required three prior games. A regression test protects this
+boundary.
 
-In a controlled comparison on the same committed 2024-2025 test set, removing
-the 42 contaminated training rows kept accuracy at 63.17%, improved ROC AUC from
-0.69320 to 0.69367, and improved log loss from 0.63417 to 0.63408.
+Elo is also point-in-time: each game's rating is recorded before that result
+updates either team. Rating differences carry 67% of their value into a new
+season, which moves teams toward the league average after offseason changes.
 
-## Data contract
+On the same 2024-2025 test set, removing the 42 contaminated training rows kept
+accuracy at 63.17%, improved ROC AUC from 0.69320 to 0.69367, and improved log
+loss from 0.63417 to 0.63408.
 
-[`data/data_contract.json`](data/data_contract.json) lists the required columns
-and JSON properties. Python validates every artifact after export. Spring Boot
-validates the same contract at startup, parses every field it uses into a Java
-type, rejects duplicate games and invalid probabilities, and fails with a clear
-message if the files drift out of sync.
+### Elo model improvement
 
-Generated files:
+Elo parameters were selected using 2021-2023 as a validation period inside the
+training era. The 2024-2026 games remained the final evaluation set. Compared
+with the same logistic regression without Elo:
 
-| File | Purpose |
-|---|---|
-| `predictions.csv` | Historical and upcoming games with probabilities and features |
-| `teams.csv` | Team names, conferences, divisions, colors, and logos |
-| `team_form.csv` | Point-in-time team form history |
-| `current_form.csv` | Each team's latest five-game form |
-| `model_info.json` | Metrics, coefficients, confidence buckets, and limitations |
+| Metric | EPA-only model | EPA + Elo model |
+|---|---:|---:|
+| Accuracy | 0.630 | 0.662 |
+| ROC AUC | 0.690 | 0.714 |
+| Log loss | 0.636 | 0.620 |
+
+The improved model remains a six-feature logistic regression; Elo adds a compact
+measure of longer-term team strength instead of replacing the recent-form EPA
+features.
+
+## Dashboard
+
+The Streamlit interface includes:
+
+- team selector, logo, projected record, and league rank
+- current offensive and defensive EPA with league ranks
+- current pregame Elo and game-level Elo edges
+- completed results and remaining schedule probabilities
+- projected standings with conference filters
+- weekly upcoming picks
+- accuracy, baseline, ROC AUC, log loss, and confusion matrix
+- confidence calibration and model coefficients
+- held-out results and form history for every team
+
+Projected standings combine actual wins from completed games with expected wins
+from unplayed games. This is why projected records can contain decimals.
 
 ## Run locally
 
-Prerequisites:
-
-- Python 3.11 or 3.12
-- Java 17 or newer
-- internet access for the first dependency install and for data rebuilds
-
-### 1. Set up Python
+Python 3.11 or 3.12 is recommended.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+Open [http://localhost:8501](http://localhost:8501). The committed data is ready
+to use, so running the dashboard does not require a pipeline rebuild.
+
+## Rebuild predictions
+
+Install the development dependencies, then run the offline pipeline:
+
+```bash
+source .venv/bin/activate
 pip install -r requirements-dev.txt
-```
-
-The generated data is committed, so a rebuild is optional when you only want to
-run the application.
-
-### 2. Run the application
-
-```bash
-cd backend
-./mvnw spring-boot:run
-```
-
-Open [http://localhost:8080](http://localhost:8080). The dashboard and API come
-from the same Spring Boot process, so no separate frontend server is needed.
-
-### 3. Rebuild predictions
-
-From the repository root with the virtual environment active:
-
-```bash
 python python/build_data.py
 ```
 
-Useful options include `--last-season`, `--train-through`, `--form-window`, and
-`--minimum-form-games`. Run `python python/build_data.py --help` for the full
-list. Restart Spring Boot after a rebuild because the backend intentionally
-caches the artifacts at startup.
+Useful options include `--last-season`, `--train-through`, `--form-window`,
+`--minimum-form-games`, and the three `--elo-*` settings. Run
+`python python/build_data.py --help` for details.
 
-## API endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/health` | Load status and artifact counts |
-| GET | `/api/teams` | All NFL teams |
-| GET | `/api/teams/{team}` | Team, current form, and projected standing |
-| GET | `/api/teams/{team}/games` | Team schedule; supports `season` and `played` |
-| GET | `/api/teams/{team}/form` | Current rolling form and league ranks |
-| GET | `/api/predictions` | Predictions; supports `season`, `week`, `played`, and `team` |
-| GET | `/api/predictions/week/{week}` | Predictions for one week |
-| GET | `/api/predictions/team/{team}` | Predictions for one team |
-| GET | `/api/standings` | Projected records; optionally filter by `conference` |
-| GET | `/api/model` | Complete model metadata |
-| GET | `/api/model/performance` | Evaluation metrics and confidence buckets |
-
-Errors use JSON with a timestamp, HTTP status, error name, useful message, and
-request path. Unknown teams return 404; malformed parameters return 400.
-
-## Tests and builds
-
-Run Python tests:
+## Tests
 
 ```bash
 source .venv/bin/activate
 python -m pytest
 ```
 
-Run Java tests and build the runnable JAR:
+The tests cover rolling features, leakage prevention, model training,
+probability bounds, the artifact contract, generated exports, projected
+standings, pregame Elo leakage protection, away-team probability conversion,
+Streamlit startup, and team selection.
 
-```bash
-cd backend
-./mvnw test
-./mvnw clean package
-```
+## Generated data contract
 
-The tests cover rolling feature generation, leakage prevention, model training,
-probability bounds, generated files, duplicate games, the Python/Java contract,
-application startup, REST endpoints, error responses, and standings math.
+[`data/data_contract.json`](data/data_contract.json) lists every required CSV
+column and JSON property. Both the pipeline and dashboard validate the
+artifacts, including duplicate game IDs and probability ranges.
 
-## Dashboard
-
-The frontend includes:
-
-- team selector, logo, full-season projected record, and league rank
-- current offensive and defensive EPA with league ranks
-- game-by-game schedules and selected-team win probability
-- weekly league predictions and projected standings
-- held-out accuracy, baseline, ROC AUC, and test sample size
-- feature, confidence-bucket, methodology, and limitation explanations
-- loading and API error states, with mobile-friendly layouts
+| File | Purpose |
+|---|---|
+| `predictions.csv` | Historical and upcoming games, probabilities, and features |
+| `teams.csv` | Team names, conferences, divisions, colors, and logos |
+| `team_form.csv` | Point-in-time team form history |
+| `current_form.csv` | Each team's latest five-game form |
+| `model_info.json` | Metrics, coefficients, confidence buckets, and limitations |
 
 ## Known limitations
 
 - Injuries, starting-quarterback changes, weather, and roster moves are absent.
-- Early-season form carries over from the prior season.
-- Future games share the latest available form until the pipeline is rebuilt.
+- Early-season form carries over from the previous season.
+- Future games use the latest available form until the pipeline is rebuilt.
 - The model predicts winners, not betting-spread results.
-- Projected wins add actual wins to expected future wins. They are estimates,
-  so projected records can contain decimals.
 
 ## Data source
 

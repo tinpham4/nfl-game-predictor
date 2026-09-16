@@ -7,9 +7,15 @@ from pathlib import Path
 
 import pandas as pd
 
-from .config import FEATURE_NAMES, PipelineConfig
+from .config import BASE_FEATURE_NAMES, FEATURE_NAMES, PipelineConfig
 from .data_loading import load_play_by_play, load_schedules, load_teams
-from .features import add_rolling_form, assemble_game_features, build_current_form, build_team_games
+from .features import (
+    add_pregame_elo,
+    add_rolling_form,
+    assemble_game_features,
+    build_current_form,
+    build_team_games,
+)
 from .modeling import add_predictions, confidence_buckets, train_model
 from .validation import validate_output_files
 
@@ -20,7 +26,8 @@ PREDICTION_COLUMNS = [
     "is_played", "home_win_prob", "predicted_winner", "confidence",
     "actual_winner", "was_correct", "home_off_epa", "home_def_epa",
     "home_plays", "away_off_epa", "away_def_epa", "away_plays",
-    "off_epa_diff", "def_epa_diff", "pace_diff", "rest_diff",
+    "home_elo", "away_elo", "off_epa_diff", "def_epa_diff", "pace_diff",
+    "rest_diff", "elo_diff",
 ]
 TEAM_FORM_COLUMNS = [
     "game_id", "season", "week", "gameday", "team", "off_epa",
@@ -51,6 +58,12 @@ def run_pipeline(config: PipelineConfig) -> dict:
     config.validate()
     print("Loading schedules...")
     schedules = load_schedules(config.first_season, config.last_season)
+    schedules = add_pregame_elo(
+        schedules,
+        k_factor=config.elo_k_factor,
+        season_carryover=config.elo_season_carryover,
+        home_field_points=config.elo_home_field_points,
+    )
     seasons = sorted(schedules.loc[schedules["is_played"], "season"].unique())
     print("Loading play-by-play...")
     play_by_play = load_play_by_play(seasons)
@@ -63,6 +76,7 @@ def run_pipeline(config: PipelineConfig) -> dict:
     games = assemble_game_features(schedules, team_games, current_form)
 
     print("Training logistic regression...")
+    previous_model = train_model(games, config.train_through, BASE_FEATURE_NAMES)
     trained = train_model(games, config.train_through)
     predictions = add_predictions(games, trained)
     teams = load_teams(set(games["home_team"]) | set(games["away_team"]))
@@ -78,8 +92,27 @@ def run_pipeline(config: PipelineConfig) -> dict:
         "upcoming_season": config.last_season,
         "form_window": config.form_window,
         "minimum_form_games": config.minimum_form_games,
+        "elo": {
+            "initial_rating": 1500.0,
+            "k_factor": config.elo_k_factor,
+            "season_carryover": config.elo_season_carryover,
+            "home_field_points": config.elo_home_field_points,
+        },
         "features": list(FEATURE_NAMES),
         "coefficients": coefficients,
+        "model_comparison": {
+            "previous_model": "EPA, pace, rest, and division features without Elo",
+            "accuracy_before": previous_model.metrics["accuracy"],
+            "accuracy_after": trained.metrics["accuracy"],
+            "roc_auc_before": previous_model.metrics["roc_auc"],
+            "roc_auc_after": trained.metrics["roc_auc"],
+            "log_loss_before": previous_model.metrics["log_loss"],
+            "log_loss_after": trained.metrics["log_loss"],
+            "parameter_selection": (
+                "Elo settings were selected on 2021-2023 training-era validation; "
+                "2024 and later remained the final holdout."
+            ),
+        },
         "confidence_buckets": confidence_buckets(predictions, config.train_through),
         "limitations": [
             "The model does not account for injuries, weather, or roster changes.",

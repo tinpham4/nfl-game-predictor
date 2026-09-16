@@ -12,6 +12,73 @@ from .validation import DataValidationError, require_columns, require_unique
 FORM_STATS = ("off_epa", "def_epa", "plays")
 
 
+def add_pregame_elo(
+    schedules: pd.DataFrame,
+    k_factor: float,
+    season_carryover: float,
+    home_field_points: float,
+    initial_rating: float = 1500.0,
+) -> pd.DataFrame:
+    """Add ratings as they stood before each game, then update played games.
+
+    The current game's result is never used in its own feature. Ratings regress
+    toward the league average between seasons so old results gradually matter
+    less after roster and coaching changes.
+    """
+
+    require_columns(
+        schedules,
+        [
+            "game_id",
+            "season",
+            "gameday",
+            "home_team",
+            "away_team",
+            "result",
+            "is_played",
+        ],
+        "schedules",
+    )
+    result = schedules.sort_values(["gameday", "game_id"]).copy()
+    ratings: dict[str, float] = {}
+    current_season: int | None = None
+    home_ratings: list[float] = []
+    away_ratings: list[float] = []
+
+    for game in result.itertuples():
+        if game.season != current_season:
+            if current_season is not None:
+                ratings = {
+                    team: initial_rating + (rating - initial_rating) * season_carryover
+                    for team, rating in ratings.items()
+                }
+            current_season = int(game.season)
+
+        home_rating = ratings.get(game.home_team, initial_rating)
+        away_rating = ratings.get(game.away_team, initial_rating)
+        home_ratings.append(home_rating)
+        away_ratings.append(away_rating)
+
+        if game.is_played:
+            actual_home_score = 1.0 if game.result > 0 else 0.0 if game.result < 0 else 0.5
+            expected_home_score = 1 / (
+                1
+                + 10
+                ** (
+                    (away_rating - (home_rating + home_field_points))
+                    / 400
+                )
+            )
+            rating_change = k_factor * (actual_home_score - expected_home_score)
+            ratings[game.home_team] = home_rating + rating_change
+            ratings[game.away_team] = away_rating - rating_change
+
+    result["home_elo"] = home_ratings
+    result["away_elo"] = away_ratings
+    result["elo_diff"] = result["home_elo"] - result["away_elo"]
+    return result.reset_index(drop=True)
+
+
 def build_team_games(play_by_play: pd.DataFrame, schedules: pd.DataFrame) -> pd.DataFrame:
     require_columns(
         play_by_play,

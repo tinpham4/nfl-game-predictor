@@ -41,7 +41,7 @@ def _nflreadpy():
         import nflreadpy as nfl
     except ImportError as exc:
         raise RuntimeError(
-            "nflreadpy is required to rebuild data. Install requirements.txt first."
+            "nflreadpy is required to rebuild data. Install requirements-dev.txt first."
         ) from exc
     return nfl
 

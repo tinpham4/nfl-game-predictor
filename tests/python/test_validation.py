@@ -18,6 +18,22 @@ def test_committed_outputs_match_shared_contract():
     validate_output_files(Path("data"))
 
 
+def test_committed_elo_model_improves_all_held_out_metrics():
+    info = json.loads(Path("data/model_info.json").read_text())
+    comparison = info["model_comparison"]
+
+    assert comparison["accuracy_after"] > comparison["accuracy_before"]
+    assert comparison["roc_auc_after"] > comparison["roc_auc_before"]
+    assert comparison["log_loss_after"] < comparison["log_loss_before"]
+
+    predictions = pd.read_csv("data/predictions.csv")
+    train_through = int(info["train_seasons"].split("-")[-1])
+    held_out = predictions[
+        predictions["is_played"] & (predictions["season"] > train_through)
+    ]
+    assert held_out["was_correct"].eq(True).mean() == pytest.approx(info["accuracy"])
+
+
 def test_export_creates_every_expected_output(tmp_path):
     source = Path("data")
     shutil.copyfile(source / "data_contract.json", tmp_path / "data_contract.json")

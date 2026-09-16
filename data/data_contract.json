@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "csvFiles": {
     "predictions.csv": {
       "requiredColumns": [
@@ -8,7 +8,8 @@
         "is_played", "home_win_prob", "predicted_winner", "confidence",
         "actual_winner", "was_correct", "home_off_epa", "home_def_epa",
         "home_plays", "away_off_epa", "away_def_epa", "away_plays",
-        "off_epa_diff", "def_epa_diff", "pace_diff", "rest_diff"
+        "home_elo", "away_elo", "off_epa_diff", "def_epa_diff",
+        "pace_diff", "rest_diff", "elo_diff"
       ]
     },
     "teams.csv": {
@@ -35,7 +36,8 @@
         "built_on", "train_seasons", "test_seasons", "train_games", "test_games",
         "accuracy", "baseline", "roc_auc", "log_loss", "confusion_matrix",
         "form_through", "upcoming_season", "form_window", "minimum_form_games",
-        "features", "coefficients", "confidence_buckets", "limitations"
+        "elo", "features", "coefficients", "model_comparison",
+        "confidence_buckets", "limitations"
       ]
     }
   }

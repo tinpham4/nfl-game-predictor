@@ -4,10 +4,8 @@ __pycache__/
 .DS_Store
 .venv/
 venv/
-backend/.mvn/wrapper/dists/
-backend/target/
 .idea/
 *.iml
 
-# Generated data is deliberately committed so the API can run without rebuilding
-# ten seasons of play-by-play data. It is small enough to keep in Git.
+# Generated data is deliberately committed so Streamlit can open without
+# rebuilding ten seasons of play-by-play data.

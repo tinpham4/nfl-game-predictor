@@ -1,6 +1,10 @@
 import pandas as pd
 
-from nfl_predictor.features import add_rolling_form, assemble_game_features
+from nfl_predictor.features import (
+    add_pregame_elo,
+    add_rolling_form,
+    assemble_game_features,
+)
 
 
 def test_rolling_form_uses_only_prior_games():
@@ -23,6 +27,31 @@ def test_rolling_form_uses_only_prior_games():
     assert result.loc[2, "form_plays"] == 65
 
 
+def test_elo_feature_is_recorded_before_the_current_result():
+    schedules = pd.DataFrame(
+        {
+            "game_id": ["g1", "g2", "g3"],
+            "season": [2024, 2024, 2025],
+            "gameday": pd.to_datetime(["2024-09-01", "2024-09-08", "2025-09-01"]),
+            "home_team": ["AAA", "AAA", "AAA"],
+            "away_team": ["BBB", "BBB", "BBB"],
+            "result": [7.0, -3.0, None],
+            "is_played": [True, True, False],
+        }
+    )
+
+    result = add_pregame_elo(schedules, 30, 0.67, 55)
+    reversed_first_result = schedules.copy()
+    reversed_first_result.loc[0, "result"] = -7.0
+    reversed_result = add_pregame_elo(reversed_first_result, 30, 0.67, 55)
+
+    assert result.loc[0, "elo_diff"] == 0
+    assert reversed_result.loc[0, "elo_diff"] == 0
+    assert result.loc[1, "elo_diff"] > 0
+    assert reversed_result.loc[1, "elo_diff"] < 0
+    assert abs(result.loc[2, "elo_diff"]) < abs(result.loc[1, "elo_diff"])
+
+
 def test_current_form_fallback_is_never_applied_to_played_games():
     schedules = pd.DataFrame({
         "game_id": ["old", "future"],
@@ -39,6 +68,7 @@ def test_current_form_fallback_is_never_applied_to_played_games():
         "away_rest": [7, 7],
         "home_rest": [7, 7],
         "is_played": [True, False],
+        "elo_diff": [0.0, 10.0],
     })
     historical_form = pd.DataFrame({
         "game_id": ["old", "old"],

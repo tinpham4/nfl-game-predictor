@@ -17,6 +17,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train-through", type=int, default=defaults.train_through)
     parser.add_argument("--form-window", type=int, default=defaults.form_window)
     parser.add_argument("--minimum-form-games", type=int, default=defaults.minimum_form_games)
+    parser.add_argument("--elo-k-factor", type=float, default=defaults.elo_k_factor)
+    parser.add_argument(
+        "--elo-season-carryover", type=float, default=defaults.elo_season_carryover
+    )
+    parser.add_argument(
+        "--elo-home-field-points", type=float, default=defaults.elo_home_field_points
+    )
     parser.add_argument("--data-directory", type=Path, default=defaults.data_directory)
     return parser.parse_args()
 
@@ -29,6 +36,9 @@ def main() -> None:
         train_through=args.train_through,
         form_window=args.form_window,
         minimum_form_games=args.minimum_form_games,
+        elo_k_factor=args.elo_k_factor,
+        elo_season_carryover=args.elo_season_carryover,
+        elo_home_field_points=args.elo_home_field_points,
         data_directory=args.data_directory,
     )
     info = run_pipeline(config)

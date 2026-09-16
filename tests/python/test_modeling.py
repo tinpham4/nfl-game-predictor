@@ -24,6 +24,7 @@ def make_games() -> pd.DataFrame:
             "pace_diff": float(index % 5),
             "rest_diff": float(index % 2),
             "div_game": index % 2,
+            "elo_diff": strength * 100,
         })
     return pd.DataFrame(rows)
 
@@ -41,4 +42,5 @@ def test_training_and_prediction_produce_valid_probabilities():
         "accuracy", "baseline", "roc_auc", "log_loss", "confusion_matrix"
     }
     assert np.isfinite(trained.scaler.mean_).all()
+    assert trained.feature_names == FEATURE_NAMES
     assert list(games[list(FEATURE_NAMES)].columns) == list(FEATURE_NAMES)
